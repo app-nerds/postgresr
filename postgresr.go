@@ -66,3 +66,7 @@ func (c *PgxConn) Ping(ctx context.Context) error {
 func (c *PgxConn) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
 	return c.conn.Query(ctx, sql, args...)
 }
+
+func (c *PgxConn) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+	return c.conn.QueryRow(ctx, sql, args...)
+}
