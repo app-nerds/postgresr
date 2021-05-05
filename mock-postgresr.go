@@ -16,6 +16,7 @@ type MockConn struct {
 }
 
 type MockRows struct {
+	CloseFunc     func()
 	ErrFunc       func() error
 	NextFunc      func() bool
 	ScanFunc      func(dest ...interface{}) error
@@ -45,6 +46,10 @@ func (m *MockConn) Query(ctx context.Context, sql string, args ...interface{}) (
 
 func (m *MockConn) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	return m.QueryRowFunc(ctx, sql, args...)
+}
+
+func (m *MockRows) Close() {
+	m.CloseFunc()
 }
 
 func (m *MockRows) Err() error {
