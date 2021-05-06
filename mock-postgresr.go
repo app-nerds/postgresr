@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgproto3/v2"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -16,12 +17,14 @@ type MockConn struct {
 }
 
 type MockRows struct {
-	CloseFunc     func()
-	ErrFunc       func() error
-	NextFunc      func() bool
-	ScanFunc      func(dest ...interface{}) error
-	ValuesFunc    func() ([]interface{}, error)
-	RawValuesFunc func() [][]byte
+	CloseFunc             func()
+	CommandTagFunc        func() pgconn.CommandTag
+	ErrFunc               func() error
+	FieldDescriptionsFunc func() []pgproto3.FieldDescription
+	NextFunc              func() bool
+	ScanFunc              func(dest ...interface{}) error
+	ValuesFunc            func() ([]interface{}, error)
+	RawValuesFunc         func() [][]byte
 }
 
 type MockRow struct {
@@ -52,16 +55,20 @@ func (m *MockRows) Close() {
 	m.CloseFunc()
 }
 
+func (m *MockRows) CommandTag() pgconn.CommandTag {
+	return m.CommandTagFunc()
+}
+
 func (m *MockRows) Err() error {
 	return m.ErrFunc()
 }
 
-func (m *MockRows) Next() bool {
-	return m.NextFunc()
+func (m *MockRows) FieldDescriptions() []pgproto3.FieldDescription {
+	return m.FieldDescriptionsFunc()
 }
 
-func (m *MockRows) Scan(dest ...interface{}) error {
-	return m.ScanFunc(dest...)
+func (m *MockRows) Next() bool {
+	return m.NextFunc()
 }
 
 func (m *MockRows) Values() ([]interface{}, error) {
