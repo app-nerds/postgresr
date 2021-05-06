@@ -71,6 +71,10 @@ func (m *MockRows) Next() bool {
 	return m.NextFunc()
 }
 
+func (m *MockRows) Scan(dest ...interface{}) error {
+	return m.ScanFunc(dest...)
+}
+
 func (m *MockRows) Values() ([]interface{}, error) {
 	return m.ValuesFunc()
 }
