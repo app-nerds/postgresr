@@ -21,6 +21,7 @@ type MockRows struct {
 	CommandTagFunc        func() pgconn.CommandTag
 	ErrFunc               func() error
 	FieldDescriptionsFunc func() []pgproto3.FieldDescription
+	GetTotalRowsFunc      func() uint64
 	NextFunc              func() bool
 	ScanFunc              func(dest ...interface{}) error
 	ValuesFunc            func() ([]interface{}, error)
@@ -65,6 +66,10 @@ func (m *MockRows) Err() error {
 
 func (m *MockRows) FieldDescriptions() []pgproto3.FieldDescription {
 	return m.FieldDescriptionsFunc()
+}
+
+func (m *MockRows) GetTotalRows() uint64 {
+	return m.GetTotalRowsFunc()
 }
 
 func (m *MockRows) Next() bool {
