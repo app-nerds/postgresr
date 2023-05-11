@@ -9,17 +9,42 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-func DataToRows(rows [][]interface{}, currentRow, totalRows int) pgx.Rows {
+type RowCounterFunc func() (*int, *int)
+
+func InitializeRowCounterFunc(currentRowTracker *int, totalRowsTracker *int, totalRows int) RowCounterFunc {
+	currentRowTracker = new(int)
+	totalRowsTracker = new(int)
+
+	*currentRowTracker = -1
+	*totalRowsTracker = totalRows
+
+	return func() (*int, *int) {
+		return currentRowTracker, totalRowsTracker
+	}
+}
+
+func DataToRows(rows [][]interface{}, rowCounterFunc RowCounterFunc) pgx.Rows {
+	currentRow, _ := rowCounterFunc()
+
+	if *currentRow > -1 {
+		*currentRow = -1
+	}
+
 	return &MockRows{
 		CloseFunc: func() {},
 		GetTotalRowsFunc: func() uint64 {
 			return uint64(len(rows))
 		},
 		NextFunc: func() bool {
-			return currentRow < totalRows
+			currentRow, totalRows := rowCounterFunc()
+			*currentRow++
+
+			result := *currentRow < *totalRows
+			return result
 		},
 		ScanFunc: func(dest ...interface{}) error {
-			data := rows[currentRow]
+			currentRow, _ := rowCounterFunc()
+			data := rows[*currentRow]
 
 			for index, d := range dest {
 				switch t := d.(type) {
@@ -105,7 +130,8 @@ func DataToRows(rows [][]interface{}, currentRow, totalRows int) pgx.Rows {
 			return nil
 		},
 		ValuesFunc: func() ([]interface{}, error) {
-			return rows[currentRow], nil
+			currentRow, _ := rowCounterFunc()
+			return rows[*currentRow], nil
 		},
 	}
 }

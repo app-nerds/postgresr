@@ -103,3 +103,60 @@ func TestQueryForStuff(t *testing.T) {
 	}
 }
 ```
+
+If you need more control of what you return in query mocks, the `DataToRows` method might be useful.
+
+```go
+func TestQueryForStuff(t *testing.T) {
+	var (
+		data1CurrentRow *int
+		data1TotalCount *int
+		data2CurrentRow *int
+		data2TotalCount *int
+	)
+
+	testData1 := [][]interface{}{
+		{
+			"value1", // column1
+			1,         // column2
+		},
+		{
+			"value2",
+			2,
+		},
+	}
+
+	testData2 := [][]interface{}{
+		{ 1, "1" },
+		{ 2, "2" },
+	}
+
+	data1Counter := postgresr.InitializeRowCounterFunc(data1CurrentRow, data1TotalCount, len(testData1))
+	data2Counter := postgresr.InitializeRowCounterFunc(data2CurrentRow, data2TotalCount, len(testData2))
+
+	pg := &postgresr.MockConn{
+		QueryFunc: func(ctx context.Context, query string, arguments ...interface{}) (pgx.Rows, error) {
+			if strings.Contains(query, "FROM table1") {
+				return postgresr.DataToRows(testData1, data1Counter), nil
+			}
+
+			return postgresr.DataToRows(testData2, data2Counter), nil
+		},
+	}
+
+	want := []SomeStruct{
+		{ Column1: "value1", Column2: 1 },
+		{ Column1: "value2", Column2: 2 },
+	}
+
+	got, err := QueryForStuff(pg)
+
+	if err != nil {
+		t.Errorf("didn't expect an error!")
+	}
+
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("wanted: %+v\ngot: %+v\n", want, got)
+	}
+}
+```
